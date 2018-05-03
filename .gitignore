@@ -2,4 +2,7 @@
 /.idea
 Homestead.json
 Homestead.yaml
+composer.lock
+htpasswd
 .env
+.phpstorm.meta.php
