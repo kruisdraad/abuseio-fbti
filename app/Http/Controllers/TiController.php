@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Webpatser\Uuid\Uuid;
 use MongoDB;
 use Log;
+use DB;
 
 class TiController extends Controller
 {
@@ -148,11 +149,15 @@ class TiController extends Controller
                 return $this->logError("Received an invalid entry change message, ignoring message");
             }
 
-            $database = env('MB_DATABASE');
             $field = $changeData['field'];
             $values = $changeData['value'];
 
-            $collection = (new MongoDB\Client)->$database->$field;
+            $db = DB::collection($field);
+            $dboptions = ['upsert' => true];
+            $db->where('id' => $values['id'])->update($values, $dboptions);
+
+            var_dump($db->getModifiedCount);
+            /*
             $updateResult = $collection->updateOne(
                 ['id' => $values['id']],
                 ['$set' => $values],
@@ -165,7 +170,7 @@ class TiController extends Controller
                 "Modified: {$updateResult->getModifiedCount()} " .
                 "Inserted:{$updateResult->getUpsertedCount()} " .
                 "ObjectID: {$updateResult->getUpsertedId()}");
-
+            */
         }
 
         return true;
