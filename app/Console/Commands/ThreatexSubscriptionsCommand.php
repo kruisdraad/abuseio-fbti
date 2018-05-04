@@ -19,7 +19,7 @@ class ThreatexSubscriptionsCommand extends Command
      *
      * @var string
      */
-    protected $signature = "threadex:subscriptions
+    protected $signature = "threatex:subscriptions
       ";
 
     /**

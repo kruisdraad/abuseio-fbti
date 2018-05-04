@@ -14,6 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\ThreatexSyncCommand::class,
+        Commands\ThreatexSubscribeCommand::class,
+        Commands\ThreatexSubscriptionsCommand::class,
     ];
 
     /**
