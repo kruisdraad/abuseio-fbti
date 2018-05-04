@@ -44,6 +44,21 @@ class ThreatexSubscribeCommand extends Command
     protected $application_token;
 
     /**
+     * The verify token for local Application
+     *
+     * @var string
+     */
+    protected $verify_token;
+
+    /**
+     * The url for local Application
+     *
+     * @var string
+     */
+    protected $app_url;
+
+
+    /**
      * The version of API for the Application at Facebook
      *
      * @var string
@@ -66,8 +81,10 @@ class ThreatexSubscribeCommand extends Command
 
         $this->application_id = env('TI_APPLICATION_ID');
         $this->application_token = env('TI_APPLICATION_TOKEN');
+        $this->verify_token = env('TI_NOTIFY_TOKEN');
         $this->api_version = env('TI_API_VERSION');
         $this->api_url = env('TI_API_URL');
+        $this->app_url = env('APP_URL');
     }
 
     /**
@@ -85,41 +102,41 @@ class ThreatexSubscribeCommand extends Command
             'threat_tags_descriptors',
         ];
 
-        if (!in_array($method, $allowed_methods)) {
-            return false;
+        // Do the first request
+        $url = "{$this->api_url}/{$this->api_version}/{$this->application_id}/subscriptions?access_token={$this->application_id}|{$this->application_token}&";
+
+        $fields = [];
+        foreach($subscriptions as $subscription) {
+            $fields[] = $subscription;
         }
 
-        // Do the first request
-        $base_url = "{$this->api_url}/{$this->api_version}/{$method}?access_token={$this->application_id}|{$this->application_token}&";
-
         $parameters = [
-            'since'             => Carbon::parse($this->option('since'))->timestamp,
-            'until'             => Carbon::parse($this->option('until'))->timestamp,
-            'limit'             => $this->option('limit'),
-            'include_expired'   => 'true',
-            'sort_by'           => 'CREATE_TIME',
-            'sort_order'        => 'ASCENDING',
+            'object' => 'threat_exchange',
+            'callback_url' => $this->app_url .'/get_report',
+            'verify_token' => $this->verify_token,
+            'fields' => $fields,
         ];
 
-        $url = $base_url . http_build_query($parameters);
+        $results = json_decode($this->doApiPostRequest($url, $parameters), true);
 
-        $results = json_decode($this->doApiRequest($url), true);
-
-        $this->info("Data for {$method} has been synced");
+        if($results['success'] === true){
+            $this->info("Sucessfully registered for subscriptions");
+        } else {
+            $this->error("Could not register TODO:add reason");
+        }
 
         return true;
     }
 
-    protected function doApiRequest($url)
+    protected function doApiPostRequest($url, $parameters)
     {
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_TIMEOUT => 30000,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($parameters),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         ]);
 
         $result = curl_exec($curl);

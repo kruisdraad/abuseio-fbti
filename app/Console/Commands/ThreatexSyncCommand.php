@@ -21,15 +21,15 @@ class ThreatexSyncCommand extends Command
      *
      * @var string
      */
-    protected $signature = "threadex:sync 
+    protected $signature = "threatex:sync 
       {--threat_exchange_members : Sync exchange members} 
       {--malware_analyses : Sync malware analysis}
-      {--malware_family : Sync malware families}
-      {--threat_descriptor : Sync threat descriptors} 
-      {--threat_indicator : Sync threat indicators}
+      {--malware_families : Sync malware families}
+      {--threat_descriptors : Sync threat descriptors} 
+      {--threat_indicators : Sync threat indicators}
       {--since=48 hours ago : Starting date of data to be collected}
       {--until=now : Ending date of data to be collected}
-      {--limit= : Amount between 1 and 1000 of entries to be collected in a single API call}
+      {--limit=1000 : Amount between 1 and 1000 of entries to be collected in a single API call}
       ";
 
     /**
@@ -108,6 +108,18 @@ class ThreatexSyncCommand extends Command
                 $this->doSyncRequest('malware_analyses');
             }
 
+            if ($this->option('malware_families')) {
+                $this->doSyncRequest('malware_families');
+            }
+
+            if ($this->option('threat_descriptors')) {
+                $this->doSyncRequest('threat_descriptors');
+            }
+
+            if ($this->option('threat_indicators')) {
+                $this->doSyncRequest('threat_indicators');
+            }
+
             if ($this->option('threat_exchange_members')) {
                 $this->doSyncRequest('threat_exchange_members');
             }
@@ -147,7 +159,7 @@ class ThreatexSyncCommand extends Command
 
         $url = $base_url . http_build_query($parameters);
         while($url != false) {
-            echo "URL $url" . PHP_EOL;
+            //echo "URL $url" . PHP_EOL;
 
             $results = json_decode($this->doApiRequest($url), true);
 
@@ -167,14 +179,13 @@ class ThreatexSyncCommand extends Command
     }
 
     protected function saveResults($method, $results) {
-        $db = DB::collection($method);
-        /*
-        $get = end($results['data']);
-        echo $get['added_on'] . PHP_EOL;
-        return true;
-        */
+        $last = end($results['data']);
+        echo 'URL last id : ' . $last['id'] . PHP_EOL;
+
         foreach($results['data'] as $values) {
+            $db = DB::collection($method);
             $dboptions = ['upsert' => true];
+
             $db->where('id', $values['id'])->update($values, $dboptions);
 
             /*
