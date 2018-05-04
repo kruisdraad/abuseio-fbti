@@ -45,13 +45,6 @@ class TiController extends Controller
      */
     protected $job_id = false;
 
-    /**
-     * The debug flag, for extended logging
-     *
-     * @var string
-     */
-    protected $debug_mode = false;
-
     public function __construct()
     {
         $this->notify_token = env('TI_NOTIFY_TOKEN');
@@ -88,7 +81,7 @@ class TiController extends Controller
     {
         $webhook_data = $request->all();
 
-        if ($this->debug_mode) {
+        if (env('APP_DEBUG')) {
             $this->LogInfo("Received the following data package: " . json_encode($webhook_data, true));
         }
 
