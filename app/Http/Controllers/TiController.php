@@ -6,7 +6,8 @@ use Webpatser\Uuid\Uuid;
 use MongoDB;
 use Log;
 
-class TiController extends Controller {
+class TiController extends Controller
+{
 
     /**
      * The verification token for Facebook
@@ -66,7 +67,7 @@ class TiController extends Controller {
      */
     public function verify_token(Request $request)
     {
-        $mode  = $request->get('hub_mode');
+        $mode = $request->get('hub_mode');
         $token = $request->get('hub_verify_token');
 
         if ($mode === "subscribe" && $this->notify_token and $token === $this->notify_token) {
@@ -91,7 +92,7 @@ class TiController extends Controller {
         }
 
         foreach ($webhook_data as $element => $data) {
-            switch($element) {
+            switch ($element) {
                 case 'entry':
                     $this->handleEntries($data);
                     break;
@@ -108,16 +109,14 @@ class TiController extends Controller {
             $this->logError("An error has occurred while receiving the following data package: " . json_encode($webhook_data, true));
         }
 
-        //	The following can be used to do a response back
-        //  $this->dispatchResponse($sender, 'Collection event has been trigger, thanks for the update!.');
-
         return response('', 200);
     }
 
-    protected function handleEntries($entries) {
-        foreach($entries as $entryId => $entryData) {
-            foreach($entryData as $updateType => $updateData) {
-                switch($updateType) {
+    protected function handleEntries($entries)
+    {
+        foreach ($entries as $entryId => $entryData) {
+            foreach ($entryData as $updateType => $updateData) {
+                switch ($updateType) {
                     case 'changes':
                         $this->handleEntryChanges($updateData);
                         break;
@@ -134,7 +133,8 @@ class TiController extends Controller {
         return true;
     }
 
-    protected function handleEntryChanges($changes) {
+    protected function handleEntryChanges($changes)
+    {
         $allowed_fields = [
             'malware_analyses',
             'malware_families',
@@ -143,33 +143,36 @@ class TiController extends Controller {
             'threat_tags_descriptors',
         ];
 
-        foreach($changes as $changeIndex => $changeData) {
-             if (!in_array($changeData['field'], $allowed_fields)) {
-                 return $this->logError("Received an invalid entry change message, ignoring message");
-             }
-             $field = $changeData['field'];
-             $values = $changeData['value'];
+        foreach ($changes as $changeIndex => $changeData) {
+            if (!in_array($changeData['field'], $allowed_fields)) {
+                return $this->logError("Received an invalid entry change message, ignoring message");
+            }
 
-             $collection = (new MongoDB\Client)->fbti->$field;
-             $updateResult = $collection->updateOne(
-                 ['id' => $values['id']],
-                 ['$set' => $values],
-                 ['upsert' => true]
-             );
+            $database = env('MB_DATABASE');
+            $field = $changeData['field'];
+            $values = $changeData['value'];
+
+            $collection = (new MongoDB\Client)->$database->$field;
+            $updateResult = $collection->updateOne(
+                ['id' => $values['id']],
+                ['$set' => $values],
+                ['upsert' => true]
+            );
 
             $this->logInfo(
-                "Database Update Type: {$field} ".
-                "Matched: {$updateResult->getMatchedCount()} ".
-                "Modified: {$updateResult->getModifiedCount()} ".
-                "Inserted:{$updateResult->getUpsertedCount()} ".
+                "Database Update Type: {$field} " .
+                "Matched: {$updateResult->getMatchedCount()} " .
+                "Modified: {$updateResult->getModifiedCount()} " .
+                "Inserted:{$updateResult->getUpsertedCount()} " .
                 "ObjectID: {$updateResult->getUpsertedId()}");
 
-         }
+        }
 
         return true;
     }
 
-    protected function logError($message) {
+    protected function logError($message)
+    {
         Log::error('JOB: ' . $this->job_id . ' WEBHOOK ' . $message);
 
         $this->job_error = true;
@@ -177,37 +180,10 @@ class TiController extends Controller {
         return false;
     }
 
-    protected function logInfo($message) {
+    protected function logInfo($message)
+    {
         Log::info('JOB: ' . $this->job_id . ' WEBHOOK ' . $message);
 
         return true;
-    }
-
-
-    /**
-     * Post a message to the Facebook Ti API.
-     *
-     * @param  integer $id
-     * @param  string  $response
-     * @return bool
-     */
-    protected function dispatchResponse($id, $response)
-    {
-        $access_token = env('TI_PAGE_ACCESS_TOKEN');
-        $url = "https://graph.facebook.com/v2.6/me/messages?access_token={$access_token}";
-
-        $data = json_encode([
-            'recipient' => ['id' => $id],
-            'message'   => ['text' => $response]
-        ]);
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        $result = curl_exec($ch);
-        curl_close($ch);
-
-        return $result;
     }
 }
