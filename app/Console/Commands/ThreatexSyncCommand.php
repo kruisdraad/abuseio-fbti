@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Webpatser\Uuid\Uuid;
 use Exception;
-use MongoDB;
 use Carbon\Carbon;
 use Log;
+use DB;
 
 /**
  * Class ThreatexSync
@@ -29,7 +29,7 @@ class ThreatexSyncCommand extends Command
       {--threat_indicator : Sync threat indicators}
       {--since=48 hours ago : Starting date of data to be collected}
       {--until=now : Ending date of data to be collected}
-      {--limit=10 : Amount between 1 and 1000 of entries to be collected in a single API call}
+      {--limit= : Amount between 1 and 1000 of entries to be collected in a single API call}
       ";
 
     /**
@@ -139,7 +139,7 @@ class ThreatexSyncCommand extends Command
         $parameters = [
             'since'             => Carbon::parse($this->option('since'))->timestamp,
             'until'             => Carbon::parse($this->option('until'))->timestamp,
-//            'limit'             => $this->option('limit'),
+            'limit'             => $this->option('limit'),
             'include_expired'   => 'true',
             'sort_by'           => 'CREATE_TIME',
             'sort_order'        => 'ASCENDING',
@@ -167,24 +167,24 @@ class ThreatexSyncCommand extends Command
     }
 
     protected function saveResults($method, $results) {
-        $collection = (new MongoDB\Client)->fbti->$method;
-$get = end($results['data']);
-echo $get['added_on'] . PHP_EOL;
-return true;
+        $db = DB::collection($method);
+        /*
+        $get = end($results['data']);
+        echo $get['added_on'] . PHP_EOL;
+        return true;
+        */
         foreach($results['data'] as $values) {
-            $updateResult = $collection->updateOne(
-                ['id' => $values['id']],
-                ['$set' => $values],
-                ['upsert' => true]
-            );
+            $dboptions = ['upsert' => true];
+            $db->where('id', $values['id'])->update($values, $dboptions);
 
+            /*
             $this->logInfo(
                 "Database Update Type: {$method} ".
                 "Matched: {$updateResult->getMatchedCount()} ".
                 "Modified: {$updateResult->getModifiedCount()} ".
                 "Inserted:{$updateResult->getUpsertedCount()} ".
                 "ObjectID: {$updateResult->getUpsertedId()}");
-
+            */
         }
 
         return true;
