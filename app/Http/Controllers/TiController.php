@@ -101,6 +101,10 @@ class TiController extends Controller
                 case 'object':
                     break;
 
+                case 'q':
+                    //just ignore this, q contains the request URI with nginx (not apache for some reason)
+                    break;
+
                 default:
                     $this->logError("Received an invalid webhook request {$element}, ignoring request");
             }
