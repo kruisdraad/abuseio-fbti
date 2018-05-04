@@ -84,29 +84,60 @@ class ThreatexSubscriptionsCommand extends Command
             'threat_indicators',
             'threat_tags_descriptors',
         ];
-
+        $found_subscriptions = [];
+/*
         if (!in_array($method, $allowed_methods)) {
             return false;
         }
-
-        // Do the first request
-        $base_url = "{$this->api_url}/{$this->api_version}/{$method}?access_token={$this->application_id}|{$this->application_token}&";
+*/
+        $base_url = "{$this->api_url}/{$this->api_version}/{$this->application_id}/subscriptions?access_token={$this->application_id}|{$this->application_token}&";
 
         $parameters = [
-            'since'             => Carbon::parse($this->option('since'))->timestamp,
-            'until'             => Carbon::parse($this->option('until'))->timestamp,
-            'limit'             => $this->option('limit'),
-            'include_expired'   => 'true',
-            'sort_by'           => 'CREATE_TIME',
-            'sort_order'        => 'ASCENDING',
         ];
-
         $url = $base_url . http_build_query($parameters);
-
 
         $results = json_decode($this->doApiRequest($url), true);
 
-        $this->info("Data for {$method} has been synced");
+        $table_data = [];
+        foreach($results['data'] as $data) {
+            if($data['object'] !== 'threat_exchange') {
+                continue;
+            }
+
+            $table_data[] = [
+                "Active",
+                $data['active'] ? 'yes': 'no',
+            ];
+
+            $table_data[] = [
+                "Callback URL",
+                "{$data['callback_url']}",
+            ];
+
+            foreach($data['fields'] as $subscription) {
+                $table_data[] = [
+		    $subscription['name'],
+                    'subscribed with ' . $subscription['version'],
+                ];
+                $found_subscriptions[] = $subscription['name'];
+            }
+        }
+
+        foreach($subscriptions as $subscription) {
+            if(!in_array($subscription, $found_subscriptions)) {
+                $table_data[] = [
+                    $subscription,
+                    'not subscribed',
+                ];
+            }
+        }
+
+        $headers = ['subscription name', 'status'];
+        $this->table($headers, $table_data);
+
+//var_dump($results);
+
+        //$this->info("Data for {$method} has been synced");
 
         return true;
     }
