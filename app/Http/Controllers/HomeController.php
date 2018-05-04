@@ -3,7 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use MongoDB;
-use Config;
+//use Config;
 use Log;
 
 class HomeController extends Controller {
@@ -13,7 +13,7 @@ class HomeController extends Controller {
     }
 
     public function index(Request $request) {
-        var_dump(Config::get('database.connections.mysql.host'));
+        var_dump(config());
 
         return response('', 200);
     }
