@@ -12,7 +12,7 @@ class HomeController extends Controller {
     }
 
     public function index(Request $request) {
-        var_dump(config('database.connections.mongodb.host'));
+        //var_dump(config('database.connections.mongodb.host'));
 
         return response('', 200);
     }
