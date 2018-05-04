@@ -32,7 +32,7 @@ return [
             'password'  => env('MB_PASSWORD', ''),
             'options'  => [
                 // When using replica
-                // 'replicaSet' => 'replicaSetName'
+                // 'replicaSet' => 'replicaSetName',
                 'database' => 'admin' // sets the authentication database required by mongo 3
             ]
         ],

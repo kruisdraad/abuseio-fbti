@@ -10,7 +10,10 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
+$router->get('/', 'HomeController@index');
+
 $router->post('/csp_report', 'CspController@report');
+$router->post('/pkp_report', 'PkpController@report');
 
 $router->get('/get_report', 'TiController@verify_token');
 $router->post('/get_report', 'TiController@handle_query');
