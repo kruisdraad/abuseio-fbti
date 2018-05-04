@@ -107,7 +107,8 @@ class TiController extends Controller
             $this->logError("An error has occurred while receiving the following data package: " . json_encode($webhook_data, true));
         }
 
-        return response('', 200);
+        //{"success":true}
+        return response('ok', 200);
     }
 
     protected function handleEntries($entries)
