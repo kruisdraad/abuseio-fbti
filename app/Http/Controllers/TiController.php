@@ -102,7 +102,7 @@ class TiController extends Controller
                     break;
 
                 default:
-                    $this->logError("Received an invalid webhook request, ignoring request");
+                    $this->logError("Received an invalid webhook request {$element}, ignoring request");
             }
         }
 
@@ -154,9 +154,8 @@ class TiController extends Controller
 
             $db = DB::collection($field);
             $dboptions = ['upsert' => true];
-            $db->where('id' => $values['id'])->update($values, $dboptions);
+            $db->where('id', $values['id'])->update($values, $dboptions);
 
-            var_dump($db->getModifiedCount);
             /*
             $updateResult = $collection->updateOne(
                 ['id' => $values['id']],
