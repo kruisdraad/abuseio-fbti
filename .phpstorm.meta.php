@@ -3,7 +3,7 @@ namespace PHPSTORM_META {
 
    /**
     * PhpStorm Meta file, to provide autocomplete information for PhpStorm
-    * Generated on 2018-05-03 17:35:34.
+    * Generated on 2018-05-04 15:23:52.
     *
     * @author Barry vd. Heuvel <barryvdh@gmail.com>
     * @see https://github.com/barryvdh/laravel-ide-helper
@@ -31,7 +31,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
@@ -87,7 +87,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
@@ -143,7 +143,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
@@ -199,7 +199,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
@@ -255,7 +255,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
@@ -311,7 +311,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
@@ -367,7 +367,7 @@ namespace PHPSTORM_META {
         'cache.store' => \Illuminate\Cache\Repository::class,
         'memcached.connector' => \Illuminate\Cache\MemcachedConnector::class,
         'queue' => \Illuminate\Queue\QueueManager::class,
-        'queue.connection' => \Illuminate\Queue\SyncQueue::class,
+        'queue.connection' => \Illuminate\Queue\DatabaseQueue::class,
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'queue.listener' => \Illuminate\Queue\Listener::class,
         'queue.failer' => \Illuminate\Queue\Failed\DatabaseFailedJobProvider::class,
