@@ -1,9 +1,28 @@
 
 # Install requirements
+- Install Ubuntu 16.04 with following packages:
+  ````  
+  apt-get install php7.0-dev php7.0-cli php7.0-zip php7.0-json php-pear php7.0-mysql 
+  apt-get install composer libapache2-mod-php7.0 php7.0-mcrypt php7.0-mbstring whois
+  apt-get install apache2 pwgen mysql-server git php7.0-curl
+  ````
 - MongoDB 3.6 : https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 - MongoDB PHP driver: 
+  ````
   pecl install mongodb
-  echo "extension=mongodb.so" >> `php --ini | grep "Scan for additional .ini" | sed -e "s|.*:\s*||"`/30-mongodb.ini
+  echo "extension=mongodb.so" >> /etc/php/7.0/cli/conf.d/30-mongodb.ini
+  echo "extension=mongodb.so" >> /etc/php/7.0/apache2/conf.d/30-mongodb.ini
+  ````
+- Change PHP settings:
+  ````
+  max_execution_time = 300
+  max_input_time = 300
+  memory_limit = 512M
+  post_max_size = 100M
+  upload_max_filesize = 100M
+  max_file_uploads = 200
+  ````
+- Restart Apache2 after enabling MongoDB and changing php settings!
 
 # Get Facebook access
 - sign up with facebook with a PERSONAL ACCOUNT (!)
@@ -23,3 +42,5 @@
 # Todo
 - move handler into a queue for asym with error handling
 - add more logging
+- collect alerts from facebook app
+- make CLI commands/autodetect to manage subscriptions
