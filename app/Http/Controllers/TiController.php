@@ -3,9 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Webpatser\Uuid\Uuid;
-use MongoDB;
 use Log;
-use DB;
 
 class TiController extends Controller
 {

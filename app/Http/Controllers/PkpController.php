@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use MongoDB;
 use Log;
 
 class PkpController extends Controller {

@@ -8,10 +8,9 @@
         "php": ">=7.0.0",
         "laravel/lumen-framework": "5.5.*",
         "vlucas/phpdotenv": "~2.2",
-        "mongodb/mongodb": "^1.3",
         "barryvdh/laravel-ide-helper": "^2.4",
         "webpatser/laravel-uuid": "^3.0",
-        "jenssegers/mongodb": "^3.3"
+        "elasticsearch/elasticsearch": "^6.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
