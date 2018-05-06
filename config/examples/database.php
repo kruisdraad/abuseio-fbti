@@ -1,4 +1,11 @@
 <?php
+$es_hosts = ['http://localhost:9200'];
+
+// Dont touch this
+if (!empty(env('ES_HOSTS'))) {
+    $es_hosts = explode(',', env('ES_HOSTS'));
+}
+// End of dont touch this
 
 return [
 
@@ -7,6 +14,11 @@ return [
     'default' => env('DB_DRIVER', 'mysql'),
 
     'connections' => [
+
+        'elasticsearch' => [
+            'hosts'     => $es_hosts,
+            'replicas'  => env('ES_REPLICAS', '1'),
+        ],
 
         'mysql' => [
             'driver'    => 'mysql',

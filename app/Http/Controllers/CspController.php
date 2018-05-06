@@ -23,6 +23,17 @@ class CspController extends Controller {
                     ->setHosts(config('database.connections.elasticsearch.hosts'))
                     ->build();
 
+        // Check if index exists or create it
+        $params = ['index'   => $index];
+        if (!$client->indices()->exists($params)) {
+            $params['body'] = [
+                'settings' => [
+                    'number_of_replicas' => config('database.connections.elasticsearch.replicas'),
+                ],
+            ];
+            $response = $client->indices()->create($params);
+        }
+
         // Check for existing record
         $params = [
             'index' => $index,
