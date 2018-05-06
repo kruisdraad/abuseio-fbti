@@ -2,7 +2,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use MongoDB;
 use Log;
 
 class HomeController extends Controller {
@@ -11,9 +10,10 @@ class HomeController extends Controller {
         //
     }
 
-    public function index(Request $request) {
-        //var_dump(config('database.connections.mongodb.host'));
+    public function index(Request $request) 
+    {
+	$response = 'OK';
 
-        return response('', 200);
+        return response($response, 200);
     }
 }

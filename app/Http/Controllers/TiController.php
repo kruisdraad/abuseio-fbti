@@ -2,10 +2,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Elasticsearch\ClientBuilder;
 use Webpatser\Uuid\Uuid;
-use MongoDB;
 use Log;
-use DB;
 
 class TiController extends Controller
 {
@@ -147,27 +146,68 @@ class TiController extends Controller
                 return $this->logError("Received an invalid entry change message, ignoring message");
             }
 
-            $field = $changeData['field'];
-            $values = $changeData['value'];
+            $index 	= $changeData['field'];
+            $type 	= $changeData['field'];
+            $id		= $changeData['value']['id'];
+            $report 	= $changeData['value'];
 
-            $db = DB::collection($field);
-            $dboptions = ['upsert' => true];
-            $db->where('id', $values['id'])->update($values, $dboptions);
+            $client = ClientBuilder::create()
+                    ->setHosts(config('database.connections.elasticsearch.hosts'))
+                    ->build();
 
-            /*
-            $updateResult = $collection->updateOne(
-                ['id' => $values['id']],
-                ['$set' => $values],
-                ['upsert' => true]
-            );
+
+            $params = ['index'   => $index];
+            if (!$client->indices()->exists($params)) {
+                $params['body'] = [
+                    'settings' => [
+                        'number_of_replicas' => 2
+                    ],
+                ];
+	        $response = $client->indices()->create($params);
+	    }
+
+            // Check for existing record
+            $params = [
+                'index' => $index,
+                'type'  => $type,
+                'body'  => [
+                    'query' => [
+                        'match' => [
+                            'id' => $id
+                        ]
+                    ]
+                ]
+            ];
+            $search = $client->search($params);
+
+            // No document found, so we create one
+            if ($search['hits']['total'] === 0) {
+                $params = [
+                    'index' => $index,
+                    'type'  => $type,
+                    'id'    => $id,
+                    'body'  => $report,
+                ];
+                $response = $client->index($params);
+
+            // Document found, so we upsert it
+            } else {
+                $params = [
+                    'index' => $index,
+                    'type'  => $type,
+                    'id'    => $id,
+                    'body'  => [
+                        'doc' => $report,
+                        'upsert'=> 1,//['pkp-report' => 1],
+                    ],
+                ];
+                $response = $client->update($params);
+            }
 
             $this->logInfo(
-                "Database Update Type: {$field} " .
-                "Matched: {$updateResult->getMatchedCount()} " .
-                "Modified: {$updateResult->getModifiedCount()} " .
-                "Inserted:{$updateResult->getUpsertedCount()} " .
-                "ObjectID: {$updateResult->getUpsertedId()}");
-            */
+                "TI-REPORT saved into database : " . json_encode($response)
+            );
+
         }
 
         return true;
