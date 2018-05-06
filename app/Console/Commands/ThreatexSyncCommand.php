@@ -2,11 +2,11 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Elasticsearch\ClientBuilder;
 use Webpatser\Uuid\Uuid;
 use Exception;
 use Carbon\Carbon;
 use Log;
-use DB;
 
 /**
  * Class ThreatexSync
@@ -103,7 +103,7 @@ class ThreatexSyncCommand extends Command
      */
     public function handle()
     {
-        //try {
+        try {
             if ($this->option('malware_analyses')) {
                 $this->doSyncRequest('malware_analyses');
             }
@@ -124,10 +124,10 @@ class ThreatexSyncCommand extends Command
                 $this->doSyncRequest('threat_exchange_members');
             }
 
-        //} catch (Exception $e) {
-        //    $this->logError("An error occurred");
-        //    return false;
-        //}
+        } catch (Exception $e) {
+            $this->logError("An error occurred" . $e->getMessage() . PHP_EOL);
+            return false;
+        }
 
         return true;
     }
@@ -183,19 +183,63 @@ class ThreatexSyncCommand extends Command
         echo 'URL last id : ' . $last['id'] . PHP_EOL;
 
         foreach($results['data'] as $values) {
-            $db = DB::collection($method);
-            $dboptions = ['upsert' => true];
+            $index 	= $method;
+            $type 	= $method;
+            $id		= $values['id'];
+            $report = $values;
 
-            $db->where('id', $values['id'])->update($values, $dboptions);
+            $client = ClientBuilder::create()
+                ->setHosts(config('database.connections.elasticsearch.hosts'))
+                ->build();
 
-            /*
-            $this->logInfo(
-                "Database Update Type: {$method} ".
-                "Matched: {$updateResult->getMatchedCount()} ".
-                "Modified: {$updateResult->getModifiedCount()} ".
-                "Inserted:{$updateResult->getUpsertedCount()} ".
-                "ObjectID: {$updateResult->getUpsertedId()}");
-            */
+
+            $params = ['index'   => $index];
+            if (!$client->indices()->exists($params)) {
+                $params['body'] = [
+                    'settings' => [
+                        'number_of_replicas' => 2
+                    ],
+                ];
+                $response = $client->indices()->create($params);
+            }
+
+            // Check for existing record
+            $params = [
+                'index' => $index,
+                'type'  => $type,
+                'body'  => [
+                    'query' => [
+                        'match' => [
+                            'id' => $id
+                        ]
+                    ]
+                ]
+            ];
+            $search = $client->search($params);
+
+            // No document found, so we create one
+            if ($search['hits']['total'] === 0) {
+                $params = [
+                    'index' => $index,
+                    'type'  => $type,
+                    'id'    => $id,
+                    'body'  => $report,
+                ];
+                $response = $client->index($params);
+
+                // Document found, so we upsert it
+            } else {
+                $params = [
+                    'index' => $index,
+                    'type'  => $type,
+                    'id'    => $id,
+                    'body'  => [
+                        'doc' => $report,
+                        'upsert'=> 1,//['pkp-report' => 1],
+                    ],
+                ];
+                $response = $client->update($params);
+            }
         }
 
         return true;
