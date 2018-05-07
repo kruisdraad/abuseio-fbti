@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Elasticsearch\ClientBuilder;
 use Webpatser\Uuid\Uuid;
+use Exception;
+use Storage;
+use Carbon\Carbon;
 use Log;
 
 class TiController extends Controller
@@ -78,35 +81,58 @@ class TiController extends Controller
      */
     public function handle_query(Request $request)
     {
-        $webhook_data = $request->all();
+        try {
+            $webhook_data = $request->all();
 
-        if (env('APP_DEBUG')) {
-            $this->LogInfo("Received the following data package: " . json_encode($webhook_data, true));
-        }
+            if (env('APP_DEBUG')) {
+                $this->LogInfo("Received the following data package: " . json_encode($webhook_data, true));
+            }
 
-        foreach ($webhook_data as $element => $data) {
-            switch ($element) {
-                case 'entry':
-                    $this->handleEntries($data);
-                    break;
+            foreach ($webhook_data as $element => $data) {
+                switch ($element) {
+                    case 'entry':
+                        $this->handleEntries($data);
+                        break;
+                     case 'object':
+                        break;
+                     case 'q':
+                        //just ignore this, q contains the request URI with nginx (not apache for some reason)
+                        break;
+                     default:
+                        $this->logError("Received an invalid webhook request {$element}, ignoring request");
+                    }
+                }
 
-                case 'object':
-                    break;
+            if ($this->job_error) {
+                $this->logError("An error has occurred while receiving the following data package: " . json_encode($webhook_data, true));
+            }
+        } catch (Exception $e) {
+            $this->logError("An error occurred while handling this job, stack trace: " . $e->getMessage() . PHP_EOL);
 
-                case 'q':
-                    //just ignore this, q contains the request URI with nginx (not apache for some reason)
-                    break;
+            $date = Carbon::now()->format('Ymd');
+            $path = 'failed_objects/'.$date;
+            $file = $this->job_id . '.json';
 
-                default:
-                    $this->logError("Received an invalid webhook request {$element}, ignoring request");
+            umask(0007);
+
+            if (!Storage::exists($path)) {
+                if (!Storage::makeDirectory($path, 0770)) {
+                    Log::error(
+                        get_class($this) . ': ' .
+                        'Unable to create directory: ' . $path
+                    );
+                }
+            }
+
+            if (Storage::put( $file, json_encode($request->all()) ) === false) {
+                Log::error(
+                    get_class($this).': '.
+                    'Unable to write file: '.$file
+                );
             }
         }
 
-        if ($this->job_error) {
-            $this->logError("An error has occurred while receiving the following data package: " . json_encode($webhook_data, true));
-        }
-
-        //{"success":true}
+        //return {"success":true} ?
         return response('ok', 200);
     }
 
@@ -163,8 +189,14 @@ class TiController extends Controller
                         'number_of_replicas' => config('database.connections.elasticsearch.replicas'),
                     ],
                 ];
-	        $response = $client->indices()->create($params);
-	    }
+	            $response = $client->indices()->create($params);
+
+                $this->logInfo(
+                    "Index for {$index} did not exist and was created with replicas: " .
+                    config('database.connections.elasticsearch.replicas') .
+                    json_encode($response)
+                );
+	        }
 
             // Check for existing record
             $params = [
