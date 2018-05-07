@@ -5,8 +5,8 @@ use Illuminate\Http\Request;
 use Elasticsearch\ClientBuilder;
 use Webpatser\Uuid\Uuid;
 use Exception;
-use Storage;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Log;
 
 class TiController extends Controller
@@ -111,7 +111,7 @@ class TiController extends Controller
 
             $date = Carbon::now()->format('Ymd');
             $path = 'failed_objects/'.$date;
-            $file = $this->job_id . '.json';
+            $file = $path . $this->job_id . '.json';
 
             umask(0007);
 
