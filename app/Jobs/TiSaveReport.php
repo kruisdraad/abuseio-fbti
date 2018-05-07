@@ -58,7 +58,7 @@ class TiSaveReport extends Job
 
         $this->application_id = env('TI_APPLICATION_ID');
         $this->application_token = env('TI_APPLICATION_TOKEN');
-        $this->job_id = Uuid::generate(4);
+        $this->job_id = (string)Uuid::generate(4);
         $this->debug = env('APP_DEBUG');
     }
 
@@ -181,6 +181,7 @@ class TiSaveReport extends Job
                 ]
             ];
             $search = $client->search($params);
+            $current_report = $search['hits']['hits'][0]['_source'];
 
             // No document found, so we create one
             if ($search['hits']['total'] === 0) {
@@ -192,8 +193,20 @@ class TiSaveReport extends Job
                 ];
                 $response = $client->index($params);
 
-                // Document found, so we upsert it
+                $this->logInfo(
+                    "TI-REPORT saved into database : " . json_encode($response)
+                );
+
+
+            // Document found, but is an exact match, so we ignore it (testing)
+            } elseif ($current_report === $report) {
+                $this->logInfo(
+                    "TI-REPORT ignored as it would result in expensive ES-NOOP : "
+                );
+
+            // Document found and diffs, so we upsert it 
             } else {
+
                 $params = [
                     'index' => $index,
                     'type'  => $type,
@@ -205,11 +218,12 @@ class TiSaveReport extends Job
                     'retry_on_conflict' => 2,
                 ];
                 $response = $client->update($params);
-            }
 
-            $this->logInfo(
-                "TI-REPORT saved into database : " . json_encode($response)
-            );
+                $this->logInfo(
+                    "TI-REPORT saved into database : " . json_encode($response)
+                );
+
+            }
 
         }
 

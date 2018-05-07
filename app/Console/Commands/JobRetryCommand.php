@@ -58,7 +58,7 @@ class JobRetryCommand extends Command
             $this->error("The file {$this->file} does not exist");
         }
 
-        $data = Storage::get($this->file);
+        $data = json_decode(Storage::get($this->file), true);
 
         dispatch(new TiSaveReport($data));
 

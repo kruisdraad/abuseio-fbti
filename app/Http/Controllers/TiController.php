@@ -222,6 +222,12 @@ class TiController extends Controller
                 ];
                 $response = $client->index($params);
 
+            // Document found, but is an exact match, so we ignore it (testing)
+            } elseif ($current_report === $report) {
+                $this->logInfo(
+                    "TI-REPORT ignored as it would result in expensive ES-NOOP : "
+                );
+
             // Document found, so we upsert it
             } else {
                 $params = [
