@@ -4,20 +4,38 @@ it is finished, ok?
 
 # Install requirements
 - Install Ubuntu 16.04 DB with Elasticsearch and Kibana
+- Update Elasticsearch config for higher load:
+    ````$xslt
+    thread_pool:
+        bulk:
+            queue_size: 1000
+        search:
+            queue_size: 5000
+        index:
+            queue_size: 5000
+    ````
+    
+    Note: Getting errors like below are an indication that the index.queue_size is not sufficiant:
+    ````$xslt
+    WEBHOOK An error occurred while handling │[2018-05-07 17:02:21] lumen.INFO: JOB: c01b2ca4-d179-49a1-bf79-5a5b9377371a WEBHOOK TI-REPORT saved into database : {"
+    this job, stack trace: {"error":{"root_cause":[{"type":"es_rejected_execution_exception","reason":"rejected execution │_index":"threat_indicators","_type":"threat_indicators","_id":"1563070557139172","_version":2,"result":"noop","_shards
+    of org.elasticsearch.transport.TcpTransport$RequestHandler@21b6639a
+    ````
 - Install Ubuntu 16.04 WEB with following packages:
   ````  
   apt-get install php7.0-dev php7.0-cli php7.0-zip php7.0-json php-pear php7.0-mysql 
   apt-get install composer libapache2-mod-php7.0 php7.0-mcrypt php7.0-mbstring whois
   apt-get install apache2 pwgen mysql-server git php7.0-curl
   ````
+- Update MySQL to handle at least 2000 connections
 - Enable Apache modules
   ````
-   a2enmod headers
-   a2enmod rewrite
-   a2enmod ssl
-   a2enmod proxy
-   a2enmod proxy-http
-   a2enmod remoteip
+  a2enmod headers
+  a2enmod rewrite
+  a2enmod ssl
+  a2enmod proxy
+  a2enmod proxy-http
+  a2enmod remoteip
   ````
 - YOU MUST Set a 32byte APP_KEY 
 - You MUST enable SSL on your endpoint (at apache here, or at haproxy)
