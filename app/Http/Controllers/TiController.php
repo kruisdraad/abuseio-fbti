@@ -211,6 +211,10 @@ class TiController extends Controller
                 ]
             ];
             $search = $client->search($params);
+            $current_report = [];
+            if (!empty($search['hits']['hits'][0]['_source'])) {
+                $current_report = $search['hits']['hits'][0]['_source'];
+            }
 
             // No document found, so we create one
             if ($search['hits']['total'] === 0) {
@@ -221,6 +225,10 @@ class TiController extends Controller
                     'body'  => $report,
                 ];
                 $response = $client->index($params);
+
+                $this->logInfo(
+                    "TI-REPORT saved into database : " . json_encode($response)
+                );
 
             // Document found, but is an exact match, so we ignore it (testing)
             } elseif ($current_report === $report) {
@@ -241,11 +249,12 @@ class TiController extends Controller
                     'retry_on_conflict' => 2,
                 ];
                 $response = $client->update($params);
-            }
 
-            $this->logInfo(
-                "TI-REPORT saved into database : " . json_encode($response)
-            );
+                $this->logInfo(
+                    "TI-REPORT saved into database : " . json_encode($response)
+                );
+
+            }
 
         }
 
