@@ -237,6 +237,7 @@ class ThreatexSyncCommand extends Command
                         'doc' => $report,
                         'upsert'=> 1,//['pkp-report' => 1],
                     ],
+                    'retry_on_conflict' => 2,
                 ];
                 $response = $client->update($params);
             }

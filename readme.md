@@ -19,6 +19,7 @@ it is finished, ok?
    a2enmod proxy-http
    a2enmod remoteip
   ````
+- YOU MUST Set a 32byte APP_KEY 
 - You MUST enable SSL on your endpoint (at apache here, or at haproxy)
 - You SHOULD use haproxy with 3 backend WEB nodes
 - You SHOULD use ES with 2 copies (its prolly hardcoded at this moment :>)

@@ -198,8 +198,9 @@ class TiController extends Controller
                     'id'    => $id,
                     'body'  => [
                         'doc' => $report,
-                        'upsert'=> 1,//['pkp-report' => 1],
+                        'upsert'=> 1,
                     ],
+                    'retry_on_conflict' => 2,
                 ];
                 $response = $client->update($params);
             }
