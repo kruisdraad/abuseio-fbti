@@ -110,8 +110,8 @@ class TiController extends Controller
             $this->logError("An error occurred while handling this job, stack trace: " . $e->getMessage() . PHP_EOL);
 
             $date = Carbon::now()->format('Ymd');
-            $path = 'failed_objects/'.$date;
-            $file = $path . $this->job_id . '.json';
+            $path = "failed_objects/{$date}";
+            $file = "{$path}/{$this->job_id}.json";
 
             umask(0007);
 
