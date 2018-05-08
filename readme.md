@@ -25,7 +25,7 @@ it is finished, ok?
   ````  
   apt-get install php7.0-dev php7.0-cli php7.0-zip php7.0-json php-pear php7.0-mysql 
   apt-get install composer libapache2-mod-php7.0 php7.0-mcrypt php7.0-mbstring whois
-  apt-get install apache2 pwgen mysql-server git php7.0-curl
+  apt-get install apache2 pwgen beanstalkd git php7.0-curl
   ````
 - Update MySQL to handle at least 2000 connections
 - Enable Apache modules
@@ -44,6 +44,12 @@ it is finished, ok?
   systemctl enable worker-received_reports\@{6..10}.service
   systemctl daemon-reload
   systemctl restart worker-received_reports@{6..10}
+  ````
+- Update /etc/default/beanstalkd:
+  ````
+  BEANSTALKD_LISTEN_ADDR=0.0.0.0
+  BEANSTALKD_LISTEN_PORT=11300
+  BEANSTALKD_EXTRA="-b /var/lib/beanstalkd -z 524280"
   ````
 - YOU MUST Set a 32byte APP_KEY 
 - You MUST enable SSL on your endpoint (at apache here, or at haproxy)
