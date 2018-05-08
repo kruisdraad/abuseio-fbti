@@ -37,6 +37,14 @@ it is finished, ok?
   a2enmod proxy-http
   a2enmod remoteip
   ````
+
+- Copy the systemD file, update the hostname and enable a nice amount of workers:
+  ````
+  systemctl daemon-reload
+  systemctl enable worker-received_reports\@{6..10}.service
+  systemctl daemon-reload
+  systemctl restart worker-received_reports@{6..10}
+  ````
 - YOU MUST Set a 32byte APP_KEY 
 - You MUST enable SSL on your endpoint (at apache here, or at haproxy)
 - You SHOULD use haproxy with 3 backend WEB nodes
