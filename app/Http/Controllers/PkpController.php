@@ -17,7 +17,7 @@ class PkpController extends Controller {
 
         $index = 'pkp';
         $type  = 'report';
-        $id    =  Uuid::generate(4);
+        $id    =  (string)Uuid::generate(4);
 
         $client = ClientBuilder::create()
                     ->setHosts(config('database.connections.elasticsearch.hosts'))

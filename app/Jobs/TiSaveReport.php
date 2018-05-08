@@ -196,12 +196,14 @@ class TiSaveReport extends Job
                 $this->logInfo(
                     "TI-REPORT saved into database : " . json_encode($response)
                 );
-
+            }
+/*
+Lets not update documents that might already have been updated with newer info??
 
             // Document found, but is an exact match, so we ignore it (testing)
             } elseif ($current_report === $report) {
                 $this->logInfo(
-                    "TI-REPORT ignored as it would result in expensive ES-NOOP : "
+                    "TI-REPORT ignored as it would result in expensive ES-NOOP in {$index}/{$type}/{$id}"
                 );
 
             // Document found and diffs, so we upsert it 
@@ -215,14 +217,14 @@ class TiSaveReport extends Job
                         'doc' => $report,
                         'upsert'=> 1,
                     ],
-                    'retry_on_conflict' => 2,
+                    'retry_on_conflict' => 5,
                 ];
                 $response = $client->update($params);
 
                 $this->logInfo(
                     "TI-REPORT saved into database : " . json_encode($response)
                 );
-
+*/
             }
 
         }

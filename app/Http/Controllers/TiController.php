@@ -233,7 +233,7 @@ class TiController extends Controller
             // Document found, but is an exact match, so we ignore it (testing)
             } elseif ($current_report === $report) {
                 $this->logInfo(
-                    "TI-REPORT ignored as it would result in expensive ES-NOOP : "
+                    "TI-REPORT ignored as it would result in expensive ES-NOOP in {$index}/{$type}/{$id}"
                 );
 
             // Document found, so we upsert it
@@ -244,9 +244,9 @@ class TiController extends Controller
                     'id'    => $id,
                     'body'  => [
                         'doc' => $report,
-                        'upsert'=> 1,
+//                        'upsert'=> 1,
                     ],
-                    'retry_on_conflict' => 2,
+                    'retry_on_conflict' => 5,
                 ];
                 $response = $client->update($params);
 

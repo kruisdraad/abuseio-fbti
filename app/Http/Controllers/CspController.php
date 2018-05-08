@@ -17,7 +17,7 @@ class CspController extends Controller {
 
         $index = 'csp';
         $type  = 'report';
-        $id    =  Uuid::generate(4);
+        $id    =  (string)Uuid::generate(4);
 
         $client = ClientBuilder::create()
                     ->setHosts(config('database.connections.elasticsearch.hosts'))
