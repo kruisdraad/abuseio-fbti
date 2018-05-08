@@ -190,6 +190,10 @@ class TiSaveReport extends Job
                     $current_report = $search['hits']['hits'][0]['_source'];
                 }
             }
+            // Remove locally enriched data
+            if(!empty($current_report['enriched'])) {
+                unset($current_report['enriched']);
+            }
 
             // No document found, so we create one
             if ($search['hits']['total'] === 0) {
