@@ -62,6 +62,7 @@ class WorkerStartCommand extends Command
         $queue->watch($this->queue);
 
         while (true) {
+            usleep(500000); //0.5 seconds
             if (!$job = $queue->reserve()) {
                 continue;
             }
@@ -73,7 +74,7 @@ class WorkerStartCommand extends Command
                 $data = $jobData['data'];
                 $class= '\\App\\Jobs\\' . $type;
 
-                Log::info("Job with UUID {$uuid} has been plucked from the queue");
+                Log::info("Job with ID {$job->getId()} and UUID {$uuid} has been plucked from the queue");
 
                 $handler = new $class($uuid, $data);
                 if ($handler->handle()) {
@@ -84,7 +85,7 @@ class WorkerStartCommand extends Command
                     $queue->bury($job);
                 }
             } catch (Exception $e) {
-                Log::info("Job with UUID {$uuid} has faulted and buried in the queue. reason: {$e->getMessage()}");
+                Log::error("Job with UUID {$uuid} has faulted and buried in the queue. reason: {$e->getMessage()}");
                 $queue->bury($job);
             }
         }
