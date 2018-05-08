@@ -12,7 +12,8 @@
         "webpatser/laravel-uuid": "^3.0",
         "elasticsearch/elasticsearch": "^6.0",
         "league/flysystem": "^1.0",
-        "pearl/lumen-log-rotate": "^1.0"
+        "pearl/lumen-log-rotate": "^1.0",
+        "pda/pheanstalk": "~3.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

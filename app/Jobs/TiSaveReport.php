@@ -3,11 +3,10 @@
 namespace App\Jobs;
 
 use Elasticsearch\ClientBuilder;
-use Webpatser\Uuid\Uuid;
 use Exception;
 use Log;
 
-class TiSaveReport extends Job
+class TiSaveReport extends Job// implements SelfHandling
 {
     /**
      * @var array
@@ -52,13 +51,13 @@ class TiSaveReport extends Job
      * @throws Exception
      * @return void
      */
-    public function __construct($data)
+    public function __construct($id, $data)
     {
         $this->data = $data;
+        $this->job_id = $id;
 
         $this->application_id = env('TI_APPLICATION_ID');
         $this->application_token = env('TI_APPLICATION_TOKEN');
-        $this->job_id = (string)Uuid::generate(4);
         $this->debug = env('APP_DEBUG');
     }
 
@@ -92,6 +91,8 @@ class TiSaveReport extends Job
         if ($this->job_error) {
             throw new Exception("An error has occurred while receiving the following data package: " . json_encode($this->data));
         }
+
+        return true;
     }
 
     /**
@@ -196,9 +197,6 @@ class TiSaveReport extends Job
                 $this->logInfo(
                     "TI-REPORT saved into database : " . json_encode($response)
                 );
-            }
-/*
-Lets not update documents that might already have been updated with newer info??
 
             // Document found, but is an exact match, so we ignore it (testing)
             } elseif ($current_report === $report) {
@@ -224,7 +222,6 @@ Lets not update documents that might already have been updated with newer info??
                 $this->logInfo(
                     "TI-REPORT saved into database : " . json_encode($response)
                 );
-*/
             }
 
         }

@@ -1,0 +1,13 @@
+[Unit]
+Description=AITE worker for receive_reports, instance %i
+After=multi-user.target
+
+[Service]
+PermissionsStartOnly=true
+Type=idle
+User=www-data
+WorkingDirectory=/var/www/vhosts/VHOSTNAME/
+ExecStart=/usr/bin/php artisan worker:start received_report
+Restart=always
+TimeoutStartSec=10
+RestartSec=10
