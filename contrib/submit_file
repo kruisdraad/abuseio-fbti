@@ -1,0 +1,31 @@
+#!/usr/bin/php
+<?php
+$file = $argv[1];
+
+if (!file_exists($file)) {
+  die('file missing');
+}
+
+//Broken ... headers needs HMAC in 0.2b !!!
+$data_string = file_get_contents($file);
+
+$ch = curl_init('https://VHOST/get_report');                                                                      
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
+curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);                                                                  
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
+    'Content-Type: application/json',                                                                                
+    'Content-Length: ' . strlen($data_string))                                                                       
+);                                                                                                                   
+                                                                                                                     
+$result = curl_exec($ch);
+
+if(!curl_errno($ch)) {
+  $info = curl_getinfo($ch);
+  echo "Took {$info['total_time']} seconds to send a request to {$info['url']} and returned CODE:{$info['http_code']} CONTENT '{$result}'" . PHP_EOL;
+}
+
+if ($result === "ok") {
+  unlink($file);
+}
+?>
