@@ -90,8 +90,10 @@ class TiController extends Controller
             return false;
         }
 
+        $queue = 'worker_queue_' . intval($this->startup->format('s'));
+
         $job = $pheanstalk
-            ->useTube('received_reports')
+            ->useTube($queue)
             ->put(json_encode([ 'type' => 'TiSaveReport', 'id' => $this->job_id, 'data' => $data]));
 
         if (!is_numeric($job)) {
@@ -99,7 +101,7 @@ class TiController extends Controller
             return false;
         }
 
-        Log::info("Queued job with ID : {$job} and UUID : {$this->job_id}");
+        Log::info("Queued job into {$queue} with ID : {$job} and UUID : {$this->job_id}");
 
         return true;
     }

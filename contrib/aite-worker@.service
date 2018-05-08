@@ -1,0 +1,13 @@
+[Unit]
+Description=AITE worker instance %i
+After=multi-user.target
+
+[Service]
+PermissionsStartOnly=true
+Type=idle
+User=www-data
+WorkingDirectory=/var/www/vhosts/aite.abuse.io/
+ExecStart=/usr/bin/php artisan worker:start worker_queue_%i
+Restart=always
+TimeoutStartSec=10
+RestartSec=10
