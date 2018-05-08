@@ -6,7 +6,7 @@ use Elasticsearch\ClientBuilder;
 use Exception;
 use Log;
 
-class TiSaveReport extends Job// implements SelfHandling
+class TiSaveReport extends Job
 {
     /**
      * @var array
@@ -183,7 +183,13 @@ class TiSaveReport extends Job// implements SelfHandling
                 ]
             ];
             $search = $client->search($params);
-            $current_report = $search['hits']['hits'][0]['_source'];
+
+            $current_report = [];
+            if(!empty($search['hits']['hits'][0])) {
+                if(!empty($search['hits']['hits'][0]['_source']) && is_array($search['hits']['hits'][0]['_source'])) {
+                    $current_report = $search['hits']['hits'][0]['_source'];
+                }
+            }
 
             // No document found, so we create one
             if ($search['hits']['total'] === 0) {
