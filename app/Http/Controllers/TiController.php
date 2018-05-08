@@ -19,6 +19,8 @@ class TiController extends Controller
      */
     protected $notify_token;
 
+    protected $secret_key;
+
     /**
      * The job ID, for log prefixing
      *
@@ -31,6 +33,8 @@ class TiController extends Controller
     public function __construct()
     {
         $this->notify_token = env('TI_NOTIFY_TOKEN');
+        $this->secret_key = env('TI_APPLICATION_SECRET');
+
         $this->job_id = (string)Uuid::generate(4);
         $this->startup = Carbon::now();
     }
@@ -61,7 +65,37 @@ class TiController extends Controller
      */
     public function handle_query(Request $request)
     {
-        // Missing auth?!?!?
+        // Authenticate the request
+        $rawPost = $request->getContent();
+
+	if (empty($request->header('X-Hub-Signature'))) {
+            $message = "Signature is missing.";
+            Log::info($message);
+            //return response($message, 403);
+
+	} elseif (!extension_loaded('hash')) {
+            $message = "Missing 'hash' extension to check the secret code validity.";
+            Log::info($message);
+            //return response($message, 403);
+	}
+
+	list($algo, $hash) = explode('=', $request->header('X-Hub-Signature'), 2) + array('', '');
+	if (!in_array($algo, hash_algos(), TRUE)) {
+            $message = "Hash algorithm '{$algo}' is not supported.";
+            Log::info($message);
+            //return response($message, 403);
+	}
+
+	if ($hash !== hash_hmac($algo, $rawPost, env('TI_APPLICATION_SECRET'))) { 
+            $message = "Hook secret does not match. Received {$algo} {$hash} needed " . hash_hmac($algo, $rawPost, $this->secret_key);
+            Log::info($message);
+            //return response($message, 403);
+
+	} else {
+            Log::info("Received authentic message, signed with our application secrey key.");
+        }
+
+        // Collect and handle data
         $data = $request->all();
 
         try {

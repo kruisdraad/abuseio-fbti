@@ -76,7 +76,7 @@ it is finished, ok?
 - run: php artisan threatex:subscribe
 - run: php artisan threatex:subscriptions
 - The last command should list a few feeds that are enabled. If not then your screwed (todo docs)
-
+- Go to settings->basic and get the application secret key, put in env as TI_APPLICATION_SECRET
 # Todo
 - move handler into a queue for asym with error handling
 - add more logging
