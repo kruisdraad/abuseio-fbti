@@ -89,7 +89,8 @@ class TiSaveReport extends Job// implements SelfHandling
         }
 
         if ($this->job_error) {
-            throw new Exception("An error has occurred while receiving the following data package: " . json_encode($this->data));
+            $this->logError("An error has occurred while receiving the following data package: " . json_encode($this->data));
+            return false;
         }
 
         return true;
@@ -237,7 +238,7 @@ class TiSaveReport extends Job// implements SelfHandling
      */
     protected function logError($message)
     {
-        Log::error('JOB: ' . $this->job_id . ' WEBHOOK ' . $message);
+        Log::error('JOB: ' . $this->job_id . ' : ' . $message);
 
         $this->job_error = true;
 
@@ -252,7 +253,7 @@ class TiSaveReport extends Job// implements SelfHandling
      */
     protected function logInfo($message)
     {
-        Log::info('JOB: ' . $this->job_id . ' WEBHOOK ' . $message);
+        Log::info('JOB: ' . $this->job_id . ' : ' . $message);
 
         return true;
     }
