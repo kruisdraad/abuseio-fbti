@@ -37,6 +37,7 @@ class WorkerStartCommand extends Command
      * @var string
      */
     private $queue;
+    private $worker;
 
     /**
      * Create a new command instance.
@@ -55,18 +56,20 @@ class WorkerStartCommand extends Command
     public function handle()
     {
         $this->queue = $this->argument('queue');
+        $this->worker = strtoupper($this->queue);
+
+        Log::info($this->worker . ": Starting up worker");
 
         $connection = env('BS_HOST') . ':' . env('BS_PORT');
-        $queue = new Pheanstalk($connection);
-
-        $queue->watch($this->queue);
+        $pheanstalk = new Pheanstalk($connection);
 
         while (true) {
-            usleep(500000); //0.5 seconds
-            if (!$job = $queue->reserve()) {
-                continue;
-            }
+            
             try {
+                $job = $pheanstalk
+                    ->watch($this->queue)
+                    ->ignore('default')
+                    ->reserve();
                 $jobData = json_decode($job->getData(), true);
 
                 $type = $jobData['type'];
@@ -74,19 +77,19 @@ class WorkerStartCommand extends Command
                 $data = $jobData['data'];
                 $class= '\\App\\Jobs\\' . $type;
 
-                Log::info("Job with ID {$job->getId()} and UUID {$uuid} has been plucked from the queue");
+                Log::info($this->worker . ":Job with ID {$job->getId()} and UUID {$uuid} has been plucked from the queue");
 
                 $handler = new $class($uuid, $data);
                 if ($handler->handle()) {
-                    Log::info("Job with UUID {$uuid} has completed and removed from the queue");
-                    $queue->delete($job);
+                    Log::info($this->worker . ":Job with UUID {$uuid} has completed and removed from the queue");
+                    $pheanstalk->delete($job);
                 } else {
-                    Log::info("Job with UUID {$uuid} has failed and buried in the queue");
-                    $queue->bury($job);
+                    Log::info($this->worker .":Job with UUID {$uuid} has failed and buried in the queue");
+                    $pheanstalk->bury($job);
                 }
             } catch (Exception $e) {
-                Log::error("Job with UUID {$uuid} has faulted and buried in the queue. reason: {$e->getMessage()}");
-                $queue->bury($job);
+                Log::error($this->worker . ":Job with UUID {$uuid} has faulted and buried in the queue. reason: {$e->getMessage()}");
+                $pheanstalk->bury($job);
             }
         }
     }
