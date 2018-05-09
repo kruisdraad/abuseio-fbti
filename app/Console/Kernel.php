@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
         Commands\ThreatexSyncCommand::class,
         Commands\ThreatexSubscribeCommand::class,
         Commands\ThreatexSubscriptionsCommand::class,
-        Commands\JobRetryCommand::class,
+        Commands\WorkerRetryCommand::class,
         Commands\WorkerStartCommand::class,
 	Commands\WorkerEnrichCommand::class,
     ];
