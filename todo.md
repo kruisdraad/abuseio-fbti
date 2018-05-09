@@ -2,6 +2,7 @@ codo todo:
 * manual sync into queues, to speed up processing. mind the chunks, should be in same format as TiSave
 * use app secret to API the app key, for auto config
 * continue on enricher to download missing and add extra data onto objects
+* add debug mode to CLI commands with log to console
 
 feeds to link code:
 

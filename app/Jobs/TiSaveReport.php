@@ -137,6 +137,7 @@ class TiSaveReport extends Job
             'threat_descriptors',
             'threat_indicators',
             'threat_tags_descriptors',
+            'threat_exchange_members',
         ];
 
         foreach ($changes as $changeIndex => $changeData) {
@@ -206,11 +207,11 @@ class TiSaveReport extends Job
                 $response = $client->index($params);
 
                 $this->logInfo(
-                    "TI-REPORT saved into database : " . json_encode($response)
+                    "TI-REPORT created into database : " . json_encode($response)
                 );
 
             // Document found, but is an exact match, so we ignore it (testing)
-            } elseif ($current_report === $report) {
+            } elseif (!$this->changesBetween($report, $current_report)) {
                 $this->logInfo(
                     "TI-REPORT ignored as it would result in expensive ES-NOOP in {$index}/{$type}/{$id}"
                 );
@@ -230,6 +231,14 @@ class TiSaveReport extends Job
                 ];
                 $response = $client->update($params);
 
+                if($response['result'] == 'noop') {
+                    $this->logInfo(
+                        "Detected NOOP while expected UPDATE or CREATED response. Document matching must have failed, which gives extra load to Elasticsearch!" .
+                        " compare 1 : " . json_encode($this->compare($current_report, $report)) .
+                        " compare 2 : " . json_encode($this->compare($report, $current_report))
+                    );
+                }
+
                 $this->logInfo(
                     "TI-REPORT saved into database : " . json_encode($response)
                 );
@@ -238,6 +247,50 @@ class TiSaveReport extends Job
         }
 
         return true;
+    }
+
+    /**
+     * Returns an array with the differences between $array1 and $array2
+     *
+     * @param array $aArray1
+     * @param array $aArray2
+     * @return array
+     */
+    private function changesBetween($array1, $array2) {
+        $forward  = $this->compare($array1, $array2);
+        $backward = $this->compare($array2, $array1);
+
+        if (!empty($forward)) {
+            return true;
+        }
+
+        if (!empty($backward)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function compare($array1, $array2)
+    {
+        $result = array();
+        foreach ($array1 as $key => $value) {
+            if (!is_array($array2) || !array_key_exists($key, $array2)) {
+                $result[$key] = $value;
+                continue;
+            }
+            if (is_array($value)) {
+                $recursiveArrayDiff = static::compare($value, $array2[$key]);
+                if (count($recursiveArrayDiff)) {
+                    $result[$key] = $recursiveArrayDiff;
+                }
+                continue;
+            }
+            if ($value != $array2[$key]) {
+                $result[$key] = $value;
+            }
+        }
+        return $result;
     }
 
     /**

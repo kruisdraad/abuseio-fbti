@@ -38,13 +38,13 @@ it is finished, ok?
   a2enmod remoteip
   ````
 
-- Copy the systemd file, update the hostname and enable workers 0-60 (required!):
+- Copy the systemd file, update the hostname and enable workers (minimal 60 required!):
   ````
   cp contrib/aite-worker@.service /etc/systemd/system/
   systemctl daemon-reload
-  systemctl enable aite-worker@\@{0..60}.service
+  systemctl enable aite-worker@{0..100}.service
   systemctl daemon-reload
-  systemctl start aite-worker@{0..60}
+  systemctl start aite-worker@{0..100}.service
   ````
 - Update /etc/default/beanstalkd:
   ````

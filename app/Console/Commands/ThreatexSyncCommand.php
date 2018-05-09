@@ -3,6 +3,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Elasticsearch\ClientBuilder;
+use Pheanstalk\Pheanstalk;
 use Webpatser\Uuid\Uuid;
 use Exception;
 use Carbon\Carbon;
@@ -27,7 +28,7 @@ class ThreatexSyncCommand extends Command
       {--malware_families : Sync malware families}
       {--threat_descriptors : Sync threat descriptors} 
       {--threat_indicators : Sync threat indicators}
-      {--since=48 hours ago : Starting date of data to be collected}
+      {--since=1 hours ago : Starting date of data to be collected}
       {--until=now : Ending date of data to be collected}
       {--limit=1000 : Amount between 1 and 1000 of entries to be collected in a single API call}
       ";
@@ -92,7 +93,7 @@ class ThreatexSyncCommand extends Command
         $this->application_token = env('TI_APPLICATION_TOKEN');
         $this->api_version = env('TI_API_VERSION');
         $this->api_url = env('TI_API_URL');
-        $this->job_id = Uuid::generate(4);
+        $this->job_id = (string)Uuid::generate(4);
 
     }
 
@@ -133,17 +134,7 @@ class ThreatexSyncCommand extends Command
     }
 
     protected function doSyncRequest($method) {
-        $allowed_methods = [
-            'malware_analyses',
-            'malware_families',
-            'threat_descriptors',
-            'threat_indicators',
-            'threat_exchange_members',
-        ];
-
-        if (!in_array($method, $allowed_methods)) {
-            return false;
-        }
+        $counter = 0;
 
         // Do the first request
         $base_url = "{$this->api_url}/{$this->api_version}/{$method}?access_token={$this->application_id}|{$this->application_token}&";
@@ -162,8 +153,32 @@ class ThreatexSyncCommand extends Command
             //echo "URL $url" . PHP_EOL;
 
             $results = json_decode($this->doApiRequest($url), true);
+            if ($results === false) {
+                break;
+            }
 
-            $this->saveResults($method, $results);
+            $last = end($results['data']);
+            //echo 'URL last id : ' . $last['id'] . PHP_EOL;
+
+            foreach($results['data'] as $values) {
+                $counter++;
+
+                // This is not the full object as we still, it works for now, TODO make better later
+                $data = [
+                    'entry' => [
+                        '0' => [
+                            'changes' => [
+                                '0' => [
+                                    'field' => $method,
+                                    'value' => $values,
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+
+                $this->createBeanstalk($data);
+            }
 
             if (!empty($results['paging']['cursors']['after'])) {
                 $parameters['after'] = $results['paging']['cursors']['after'];
@@ -173,77 +188,73 @@ class ThreatexSyncCommand extends Command
             }
         }
 
-        $this->logInfo("Data for {$method} has been synced");
+        $this->logInfo("Data for {$method} has been synced. Handled {$counter} new items");
 
         return true;
     }
 
-    protected function saveResults($method, $results) {
-        $last = end($results['data']);
-        echo 'URL last id : ' . $last['id'] . PHP_EOL;
+    private function createBeanstalk($data) {
+        $connection = env('BS_HOST') . ':' . env('BS_PORT');
+        $pheanstalk = new Pheanstalk($connection);
 
-        foreach($results['data'] as $values) {
-            $index 	= $method;
-            $type 	= $method;
-            $id		= $values['id'];
-            $report = $values;
-
-            $client = ClientBuilder::create()
-                ->setHosts(config('database.connections.elasticsearch.hosts'))
-                ->build();
-
-            // Check if index exists or create it
-            $params = ['index'   => $index];
-            if (!$client->indices()->exists($params)) {
-                $params['body'] = [
-                    'settings' => [
-                        'number_of_replicas' => config('database.connections.elasticsearch.replicas'),
-                    ],
-                ];
-                $response = $client->indices()->create($params);
-            }
-
-            // Check for existing record
-            $params = [
-                'index' => $index,
-                'type'  => $type,
-                'body'  => [
-                    'query' => [
-                        'match' => [
-                            'id' => $id
-                        ]
-                    ]
-                ]
-            ];
-            $search = $client->search($params);
-
-            // No document found, so we create one
-            if ($search['hits']['total'] === 0) {
-                $params = [
-                    'index' => $index,
-                    'type'  => $type,
-                    'id'    => $id,
-                    'body'  => $report,
-                ];
-                $response = $client->index($params);
-
-                // Document found, so we upsert it
-            } else {
-                $params = [
-                    'index' => $index,
-                    'type'  => $type,
-                    'id'    => $id,
-                    'body'  => [
-                        'doc' => $report,
-                        'upsert'=> 1,//['pkp-report' => 1],
-                    ],
-                    'retry_on_conflict' => 2,
-                ];
-                $response = $client->update($params);
-            }
+        if(!$pheanstalk->getConnection()->isServiceListening()) {
+            Log::error('Beanstalk is NOT running, fallback to saving onto filesystem as failed object');
+            return false;
         }
 
+        $queue = $this->selectTube($pheanstalk);
+
+        $job = $pheanstalk
+            ->useTube($queue)
+            ->put(json_encode([ 'type' => 'TiSaveReport', 'id' => $this->job_id, 'data' => $data]));
+
+        if (!is_numeric($job)) {
+            Log::error('Unable to push job into beanstalk queue, fallback to saving onto filesystem as failed object' . var_dump($job));
+            return false;
+        }
+
+        Log::info("Queued job into {$queue} with ID : {$job} and UUID : {$this->job_id}");
+
         return true;
+    }
+
+    /*
+     * Selects the tube based on how empty they are
+     * Todo: add config setting to select mode?
+     */
+    private function selectTube($queue) {
+
+        if(!$queue->getConnection()->isServiceListening()) {
+            Log::error('Beanstalk is NOT running, fallback to loadbalancing on second mode');
+            return $queue = 'worker_queue_' . intval($this->startup->format('s'));
+        }
+
+        $usage = [];
+        $prefix = 'worker_queue_';
+        foreach($queue->listTubes() as $tube) {
+            if (strncmp($tube, $prefix, strlen($prefix)) !== 0) {
+                continue;
+            }
+
+            $tubeStats=$queue->statsTube($tube);
+
+            $usage[$tube] =
+                    $tubeStats['current-jobs-ready'] +
+                    $tubeStats['current-jobs-urgent'] +
+                    $tubeStats['current-jobs-reserved'] +
+                    $tubeStats['current-jobs-delayed'];
+        }
+
+        asort($usage);
+        reset($usage);
+
+        $selected = key($usage);
+        if ($selected === null) {
+            Log::error('Beanstalk does not have any AITE queues! fallback to default queue (hint: you have move it later)');
+            $selected = 'default';
+        }
+ 
+        return $selected;
     }
 
     protected function doApiRequest($url)
@@ -259,9 +270,12 @@ class ThreatexSyncCommand extends Command
         ]);
 
         $result = curl_exec($curl);
-        //TODO error handling
-        //$err = curl_error($curl);
-        //echo "cURL Error #:" . $err;
+
+        if(curl_errno($curl)) {
+            echo 'Curl error: ' . curl_error($curl);
+            return false;
+        }
+
         curl_close($curl);
 
         return $result;
