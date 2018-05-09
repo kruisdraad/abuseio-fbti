@@ -1,9 +1,23 @@
 <?php
-$es_hosts = ['http://localhost:9200'];
-
 // Dont touch this
 if (!empty(env('ES_HOSTS'))) {
-    $es_hosts = explode(',', env('ES_HOSTS'));
+    $es_hosts = [];
+    $hosts = explode(',', env('ES_HOSTS'));
+    foreach($hosts as $host) {
+        $es_hosts[] = [
+            'host'    => $host,
+            'port'    => env('ES_PORT'),
+            'scheme'  => 'http',
+            'user'    => env('ES_USERNAME'),
+            'pass'    => env('ES_PASSWORD'),
+        ];
+    }
+} else {
+    $es_hosts = [
+        'host' => 'localhost',
+        'port' => '9200',
+        'schema' => 'http',
+    ];
 }
 // End of dont touch this
 
