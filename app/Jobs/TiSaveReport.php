@@ -233,7 +233,7 @@ class TiSaveReport extends Job
 
                 if($response['result'] == 'noop') {
                     $this->logInfo(
-                        "Detected NOOP while expected UPDATE or CREATED response. Document matching must have failed, which gives extra load to Elasticsearch!" .
+                        "TI-REPORT Detected NOOP while expected UPDATE or CREATED response. Document matching must have failed, which gives extra load to Elasticsearch!" .
                         " compare 1 : " . json_encode($this->compare($current_report, $report)) .
                         " compare 2 : " . json_encode($this->compare($report, $current_report))
                     );
