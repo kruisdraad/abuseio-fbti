@@ -124,7 +124,8 @@ class TiController extends Controller
             return false;
         }
 
-        $queue = 'worker_queue_' . intval($this->startup->format('s'));
+        //$queue = 'worker_queue_' . intval($this->startup->format('s'));
+        $queue = $this->selectTube($pheanstalk);
 
         $job = $pheanstalk
             ->useTube($queue)
@@ -138,6 +139,39 @@ class TiController extends Controller
         Log::info("Queued job into {$queue} with ID : {$job} and UUID : {$this->job_id}");
 
         return true;
+    }
+
+    /*
+     * Selects the tube based on how empty they are
+     * Todo: add config setting to select mode?
+     */
+    private function selectTube($queue) {
+
+        if(!$queue->getConnection()->isServiceListening()) {
+            Log::error('Beanstalk is NOT running, fallback to loadbalancing on second mode');
+            return $queue = 'worker_queue_' . intval($this->startup->format('s'));
+        }
+
+        $usage = [];
+        $prefix = 'worker_queue_';
+        foreach($queue->listTubes() as $tube) {
+            if (strncmp($tube, $prefix, strlen($prefix)) !== 0) {
+                continue;
+            }
+
+            $tubeStats=$queue->statsTube($tube);
+
+            $usage[$tube] =
+                    $tubeStats['current-jobs-ready'] +
+                    $tubeStats['current-jobs-urgent'] +
+                    $tubeStats['current-jobs-reserved'] +
+                    $tubeStats['current-jobs-delayed'];
+        }
+
+        asort($usage);
+        reset($usage);
+
+        return key($usage);
     }
 
     private function createFailedFile($data) {
