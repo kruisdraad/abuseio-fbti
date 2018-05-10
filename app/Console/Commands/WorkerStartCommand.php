@@ -79,6 +79,11 @@ class WorkerStartCommand extends Command
 
                 Log::info($this->worker . ":Job with ID {$job->getId()} and UUID {$uuid} has been plucked from the queue");
 
+                if(!class_exists($class)) {
+                    Log::info($this->worker .":Job with UUID {$uuid} wants to use class {$class} which does not exist");
+                    $pheanstalk->bury($job);
+                }
+
                 $handler = new $class($uuid, $data);
                 if ($handler->handle()) {
                     Log::info($this->worker . ":Job with UUID {$uuid} has completed and removed from the queue");
