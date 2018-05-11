@@ -189,8 +189,8 @@ class ThreatexSubmitCommand extends Command
 
         foreach($valid_input as $field => $allowed_names) {
             if(!empty($parameters[$field])) {
-                if (in_array($parameters[$field], $allowed_names)) {
-                    $this->error("{$parameters[$field]} has to be one of {$allowed_names}");
+                if (!in_array($parameters[$field], $allowed_names)) {
+                    $this->error("{$parameters[$field]} has to be one of : " . implode(' ', $allowed_names));
                     die();
                 }
             }
@@ -201,7 +201,7 @@ class ThreatexSubmitCommand extends Command
         $results = json_decode($this->doApiPostRequest($url, $parameters), true);
 
         if($results['success'] === true){
-            $this->info("Sucessfully submitted threat descriptor");
+            $this->info("Sucessfully submitted threat descriptor $this->option('type') $this->option('indicator')");
         } else {
             $this->error("Could not register TODO:add reason");
         }
