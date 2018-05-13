@@ -132,7 +132,7 @@ class TiController extends Controller
             ->put(json_encode([ 'type' => 'TiSaveReport', 'id' => $this->job_id, 'data' => $data]));
 
         if (!is_numeric($job)) {
-            Log::error('Unable to push job into beanstalk queue, fallback to saving onto filesystem as failed object' . var_dump($job));
+            Log::error('Unable to push job into beanstalk queue, fallback to saving onto filesystem as failed object' . json_encode($job));
             return false;
         }
 

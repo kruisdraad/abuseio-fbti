@@ -20,6 +20,7 @@ class Kernel extends ConsoleKernel
         Commands\WorkerRetryCommand::class,
         Commands\WorkerStartCommand::class,
 	Commands\WorkerEnrichCommand::class,
+        Commands\JobRetryCommand::class,
     ];
 
     /**
