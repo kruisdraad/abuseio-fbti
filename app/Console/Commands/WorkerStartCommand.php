@@ -93,7 +93,12 @@ class WorkerStartCommand extends Command
                     $pheanstalk->bury($job);
                 }
             } catch (Exception $e) {
-                Log::error($this->worker . ":Job with UUID {$uuid} has faulted and buried in the queue. reason: {$e->getMessage()}");
+                if(empty($uuid)) {
+                    Log::error($this->worker . ":Worker faulted reason: {$e->getMessage()}");
+                } else {
+                    Log::error($this->worker . ":Job with UUID {$uuid} has faulted and buried in the queue. reason: {$e->getMessage()}");
+                }
+
                 $pheanstalk->bury($job);
             }
         }
