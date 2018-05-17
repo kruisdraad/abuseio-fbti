@@ -27,8 +27,8 @@ it is finished, ok?
   apt-get install composer libapache2-mod-php7.0 php7.0-mcrypt php7.0-mbstring whois
   apt-get install apache2 pwgen beanstalkd git php7.0-curl
   ````
-- Update MySQL to handle at least 2000 connections
-- Enable Apache modules
+- Install ZMQ and ZMQ-PHP, and enable the ZMQ php module
+- Enable Apache modules and disable libapache2, its a fallback as we use fpm
   ````
   a2enmod headers
   a2enmod rewrite
@@ -36,6 +36,7 @@ it is finished, ok?
   a2enmod proxy
   a2enmod proxy-http
   a2enmod remoteip
+  a2dismod php7.0
   ````
 
 - Copy the systemd file, update the hostname and enable workers (minimal 60 required!):

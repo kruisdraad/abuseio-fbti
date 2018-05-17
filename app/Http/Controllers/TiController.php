@@ -92,7 +92,7 @@ class TiController extends Controller
             //return response($message, 403);
 
 	} else {
-            Log::info("Received authentic message, signed with our application secrey key.");
+            Log::info("Received authentic message, signed with our application secret key.");
         }
 
         // Collect and handle data
