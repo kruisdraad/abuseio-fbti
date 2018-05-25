@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use Elasticsearch\ClientBuilder;
+use Pheanstalk\Pheanstalk;
 use Exception;
 use Log;
 

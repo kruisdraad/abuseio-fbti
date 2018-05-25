@@ -201,7 +201,7 @@ class ThreatexSubmitCommand extends Command
         $results = json_decode($this->doApiPostRequest($url, $parameters), true);
 
         if($results['success'] === true){
-            $this->info("Sucessfully submitted threat descriptor $this->option('type') $this->option('indicator')");
+            $this->info("Sucessfully submitted threat descriptor {$parameters['type']} {$parameters['indicator']}");
         } else {
             $this->error("Could not register TODO:add reason");
         }
