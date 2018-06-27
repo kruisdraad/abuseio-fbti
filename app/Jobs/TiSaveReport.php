@@ -293,10 +293,6 @@ class TiSaveReport extends Job
      * @return array
      */
     private function enrichments($report) {
-        $this->logInfo(
-            "Enrichment method has been called"
-        );
-
         $enrichments = [];
 
         $value = $report['indicator']['indicator'];
