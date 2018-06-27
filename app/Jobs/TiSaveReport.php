@@ -294,7 +294,8 @@ class TiSaveReport extends Job
 
         $enrichments = [];
 
-        $type = $report['incidator']['type'];
+        $value = $report['indicator']['indicator'];
+        $type = $report['indicator']['type'];
 
         switch ($type) {
 
