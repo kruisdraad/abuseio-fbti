@@ -4,6 +4,11 @@ namespace App\Jobs;
 
 use Elasticsearch\ClientBuilder;
 use Pheanstalk\Pheanstalk;
+use Spatie\Dns\Dns;
+use Pdp\Cache;
+use Pdp\CurlHttpClient;
+use Pdp\Manager;
+use Pdp\Rules;
 use Exception;
 use Log;
 
@@ -335,9 +340,31 @@ class TiSaveReport extends Job
     }
 
     private function enrichUri($value) {
+        $enrichment = [];
+
+        $parsedUrl = parse_url($value);
+
+        $enrichment = array_merge($enrichment, $this->enrichDomain($parsedUrl['host']));
+
+        return $enrichment;
     }
 
     private function enrichDomain($value) {
+        $enrichment = [];
+
+        $manager = new Manager(new Cache(), new CurlHttpClient());
+        $rules = $manager->getRules();
+        $domain = $rules->resolve($value);
+
+        $enrichment = [
+            'domain_cctld' => strtoupper($domain->getPublicSuffix()),
+            'domain_name' => $domain->getRegistrableDomain(),
+            'domain_address' => gethostbyname($value),
+        ];
+
+        $enrichment = array_merge($enrichment, $this->enrichAddress($enrichment['domain_address']));
+
+        return $enrichment;
     }
 
     private function enrichAddress($value) {
@@ -347,7 +374,7 @@ class TiSaveReport extends Job
         $enrichment = [];
 
         if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $parts = explode('.', $value); 
+            $parts = explode('.', $value);
             $dnslookup = implode('.', array_reverse($parts)) . ".{$zone4}.";
         }
         if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
@@ -362,7 +389,7 @@ class TiSaveReport extends Job
             // 14061 | 2604:a880:1::/48 | US | arin | 2013-04-11
             $response = $result[0]['txt'];
             $enrichment = array_combine(
-                [ 'asn', 'prefix', 'bgpcountry', 'region', 'somedate' ],
+                [ 'ip_asn', 'ip_prefix', 'ip_bgpcountry', 'ip_region', 'ip_assignment' ],
                 explode(" | ", $response)
             );
         }
@@ -380,6 +407,18 @@ class TiSaveReport extends Job
 
     private function enrichEmail($value) {
         // Not implement as there are no subnet entries yet
+    }
+
+    function getDomainContact($object) {
+        // TODO
+    }
+
+    function getRipeContact($object) {
+        // TODO
+    }
+
+    function getAbuseContact($object) {
+        // TODO
     }
 
     /**
