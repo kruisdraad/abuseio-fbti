@@ -193,12 +193,16 @@ class TiSaveReport extends Job
                 }
             }
             // Remove locally enriched data
-            if(!empty($current_report['enriched'])) {
-                unset($current_report['enriched']);
+            if(!empty($current_report['enrichments'])) {
+                unset($current_report['enrichments']);
             }
 
             // No document found, so we create one
             if ($search['hits']['total'] === 0) {
+                if ($index == 'threat_descriptors') {
+                    $report['enrichments'] = $this->enrichments($report);
+                }
+
                 $params = [
                     'index' => $index,
                     'type'  => $type,
@@ -210,6 +214,9 @@ class TiSaveReport extends Job
                 $this->logInfo(
                     "TI-REPORT created into database : " . json_encode($response)
                 );
+                if ($index == 'threat_descriptors') {
+                    $this->notifications($report);
+                }
 
             // Document found, but is an exact match, so we ignore it (testing)
             } elseif (!$this->changesBetween($report, $current_report)) {
@@ -219,6 +226,9 @@ class TiSaveReport extends Job
 
             // Document found and diffs, so we upsert it 
             } else {
+                if ($index == 'threat_descriptors') {
+                    $report['enrichments'] = $this->enrichments($report);
+                }
 
                 $params = [
                     'index' => $index,
@@ -243,11 +253,98 @@ class TiSaveReport extends Job
                 $this->logInfo(
                     "TI-REPORT saved into database : " . json_encode($response)
                 );
-            }
 
+                if ($index == 'threat_descriptors') {
+                    $this->notifications($report);
+                }
+            }
         }
 
         return true;
+    }
+
+    /**
+     * Checks weither notifications are required for the object based on walking thru a set
+     * of rules to match. These rules should be stored in ES in the near feature, for now
+     * its an hardcoded json object outside the public source code.
+     *
+     * @param array $report
+     * @return boolean
+     */
+    private function notifications($report) {
+        $this->logInfo(
+            "Notifcations method has been called"
+        );
+
+        return true;
+    }
+
+    /**
+     * Returns an array with enrichment values, lookup based on external sources e.g. Cymru
+     * This hook is always called and will descide on its own if it should return any data.
+     *
+     * @param string EnrichmentType
+     * @param array EnrichmentValue
+     * @return array
+     */
+    private function enrichments($report) {
+        $this->logInfo(
+            "Enrichment method has been called"
+        );
+
+        $enrichments = [];
+
+        $type = $report['incidator']['type'];
+
+        switch ($type) {
+
+            case 'URI':
+                $this->enrichUri($value);
+                break;
+
+            case 'DOMAIN':
+                $this->enrichDomain($value);
+                break;
+
+            case 'IP_ADDRESS':
+                $this->enrichAddress($value);
+                break;
+
+            case 'IP_SUBNET':
+                $this->enrichSubnet($value);
+                break;
+
+            case 'AS_NUMBER':
+                $this->enrichAsn($value);
+                break;
+
+            case 'EMAIL_ADDRESS':
+                $this->enrichEmail($value);
+                break;
+
+            default:
+                return $enrichments;
+        }
+
+        return $enrichments;
+    }
+
+    private function enrichUri($value) {
+    }
+
+    private function enrichDomain($value) {
+    }
+
+    private function enrichAddress($value) {
+    }
+
+    private function enrichSubnet($value) {
+    }
+
+    private function enrichAsn($value) {
+    }
+
+    private function enrichEmail($value) {
     }
 
     /**
