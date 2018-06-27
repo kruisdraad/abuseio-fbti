@@ -342,6 +342,10 @@ class TiSaveReport extends Job
     private function enrichUri($value) {
         $enrichment = [];
 
+        if(substr($value, 0, 4) !== 'http') {
+            $value = "http://{$value}";
+        }
+
         $parsedUrl = parse_url($value);
 
         $enrichment = array_merge($enrichment, $this->enrichDomain($parsedUrl['host']));
@@ -362,7 +366,9 @@ class TiSaveReport extends Job
             'domain_address' => gethostbyname($value),
         ];
 
-        $enrichment = array_merge($enrichment, $this->enrichAddress($enrichment['domain_address']));
+        if(filter_var($enrichment['domain_address'], FILTER_VALIDATE_IP)) {
+            $enrichment = array_merge($enrichment, $this->enrichAddress($enrichment['domain_address']));
+        }
 
         return $enrichment;
     }
@@ -382,6 +388,10 @@ class TiSaveReport extends Job
             $unpack = unpack('H*hex', $addr);
             $hex = $unpack['hex'];
             $dnslookup = implode('.', array_reverse(str_split($hex))) . ".{$zone6}.";
+        }
+
+        if(empty($dnslookup)) {
+            return $this->logError("EnrichmentIP failed for : {$value}");
         }
 
         $result = dns_get_record($dnslookup, DNS_TXT);
