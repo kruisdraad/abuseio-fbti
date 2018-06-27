@@ -25,7 +25,7 @@ it is finished, ok?
   ````  
   apt-get install php7.0-dev php7.0-cli php7.0-zip php7.0-json php-pear php7.0-mysql 
   apt-get install composer libapache2-mod-php7.0 php7.0-mcrypt php7.0-mbstring whois
-  apt-get install apache2 pwgen beanstalkd git php7.0-curl
+  apt-get install apache2 pwgen beanstalkd git php7.0-curl php7.0-intl
   ````
 - Install ZMQ and ZMQ-PHP, and enable the ZMQ php module
 - Enable Apache modules and disable libapache2, its a fallback as we use fpm

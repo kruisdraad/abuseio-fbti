@@ -300,34 +300,38 @@ class TiSaveReport extends Job
         switch ($type) {
 
             case 'URI':
-                $this->enrichUri($value);
+                $enrichments = $this->enrichUri($value);
                 break;
 
             case 'DOMAIN':
-                $this->enrichDomain($value);
+                $enrichments = $this->enrichDomain($value);
                 break;
 
             case 'IP_ADDRESS':
-                $this->enrichAddress($value);
+                $enrichments = $this->enrichAddress($value);
                 break;
 
             case 'IP_SUBNET':
-                $this->enrichSubnet($value);
+                $enrichments = $this->enrichSubnet($value);
                 break;
 
             case 'AS_NUMBER':
-                $this->enrichAsn($value);
+                $enrichments = $this->enrichAsn($value);
                 break;
 
             case 'EMAIL_ADDRESS':
-                $this->enrichEmail($value);
+                $enrichments = $this->enrichEmail($value);
                 break;
 
             default:
-                return $enrichments;
+                return [];
         }
 
-        return $enrichments;
+        if (is_array($enrichments)) {
+            return $enrichments;
+        } else {
+            return [];
+        }
     }
 
     private function enrichUri($value) {
@@ -337,15 +341,45 @@ class TiSaveReport extends Job
     }
 
     private function enrichAddress($value) {
+        $zone4 = 'origin.asn.cymru.com';
+        $zone6 = 'origin6.asn.cymru.com';
+
+        $enrichment = [];
+
+        if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $parts = explode('.', $value); 
+            $dnslookup = implode('.', array_reverse($parts)) . ".{$zone4}.";
+        }
+        if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $addr = inet_pton($ip);
+            $unpack = unpack('H*hex', $addr);
+            $hex = $unpack['hex'];
+            $dnslookup = implode('.', array_reverse(str_split($hex))) . ".{$zone6}.";
+        }
+
+        $result = dns_get_record($dnslookup, DNS_TXT);
+        if(!empty($result[0]['txt'])) {
+            // 14061 | 2604:a880:1::/48 | US | arin | 2013-04-11
+            $response = $result[0]['txt'];
+            $enrichment = array_combine(
+                [ 'asn', 'prefix', 'bgpcountry', 'region', 'somedate' ],
+                explode(" | ", $response)
+            );
+        }
+
+        return $enrichment;
     }
 
     private function enrichSubnet($value) {
+        // Not implement as there are no subnet entries yet
     }
 
     private function enrichAsn($value) {
+        // Not implement as there are no subnet entries yet
     }
 
     private function enrichEmail($value) {
+        // Not implement as there are no subnet entries yet
     }
 
     /**

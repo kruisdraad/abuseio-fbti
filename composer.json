@@ -14,7 +14,8 @@
         "league/flysystem": "^1.0",
         "pearl/lumen-log-rotate": "^1.0",
         "pda/pheanstalk": "~3.0",
-        "phpmailer/phpmailer": "^6.0"
+        "phpmailer/phpmailer": "^6.0",
+        "jeremykendall/php-domain-parser": "^5.3"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
