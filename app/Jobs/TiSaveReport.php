@@ -380,7 +380,7 @@ class TiSaveReport extends Job
             $dnslookup = implode('.', array_reverse($parts)) . ".{$zone4}.";
         }
         if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-            $addr = inet_pton($ip);
+            $addr = inet_pton($value);
             $unpack = unpack('H*hex', $addr);
             $hex = $unpack['hex'];
             $dnslookup = implode('.', array_reverse(str_split($hex))) . ".{$zone6}.";
