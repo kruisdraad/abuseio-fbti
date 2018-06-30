@@ -352,6 +352,10 @@ class TiSaveReport extends Job
     private function enrichDomain($value) {
         $enrichment = [];
 
+        if (strlen($value) > 254)) {
+            return $enrichment;
+        }
+
         $manager = new Manager(new Cache(), new CurlHttpClient());
         $rules = $manager->getRules();
         $domain = $rules->resolve($value);
