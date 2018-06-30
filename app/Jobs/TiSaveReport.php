@@ -393,10 +393,20 @@ class TiSaveReport extends Job
         $result = dns_get_record($dnslookup, DNS_TXT);
         if(!empty($result[0]['txt'])) {
             // 14061 | 2604:a880:1::/48 | US | arin | 2013-04-11
-            $response = $result[0]['txt'];
+            $response = explode(" | ", $result[0]['txt']);
+
+            //16276 | 192.0.0.0/16 |  | other |
+            if (count($response) == 4) {
+                $response = explode(" | ", $result[0]['txt'] . " ");
+            }
+//$this->logInfo($response);
+
+            if(empty($response[2])) { $response[2] = 'Unknown'; }
+            if(empty($response[4])) { $response[4] = '1997-01-01'; }
+
             $enrichment = array_combine(
                 [ 'ip_asn', 'ip_prefix', 'ip_bgpcountry', 'ip_region', 'ip_assignment' ],
-                explode(" | ", $response)
+                $response
             );
         }
 
