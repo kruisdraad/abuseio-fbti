@@ -352,7 +352,7 @@ class TiSaveReport extends Job
     private function enrichDomain($value) {
         $enrichment = [];
 
-        if (strlen($value) > 254)) {
+        if (strlen($value) > 254) {
             return $enrichment;
         }
 
