@@ -11,6 +11,7 @@ use Pdp\Manager;
 use Pdp\Rules;
 use Exception;
 use Log;
+use PHPMailer;
 
 class TiSaveReport extends Job
 {
@@ -278,8 +279,44 @@ class TiSaveReport extends Job
      */
     private function notifications($report) {
         $this->logInfo(
-            "Notifcations method has been called"
+            "Notifications method has been called"
         );
+
+        if ((!empty(($report['enrichments']['ip_bgpcountry']))) AND
+            (strcasecmp($report['enrichments']['ip_bgpcountry'], 'NL') == 0)
+        ) {
+            $this->notificationSend('cert@abuse.io', $report);
+        }
+
+        if ((!empty(($report['enrichments']['domain_cctld']))) AND
+            (strcasecmp($report['enrichments']['domain_cctld'], 'NL') == 0)
+        ) {
+            $this->notificationSend('cert@abuse.io', $report);
+        }
+
+        return true;
+    }
+
+    private function notificationSend($recipient, $report) {
+        //$mail = new PHPMailer();
+        $mail = new PHPMailer\PHPMailer\PHPMailer();
+
+        $mail->IsSMTP();
+        $mail->SMTPSecure = false;
+        $mail->SMTPAutoTLS = false;
+
+        $mail->setFrom('cert@abuse.io', 'AbuseIO CERT - AITE');
+        $mail->addAddress($recipient, 'AITE-Feeder');
+        $mail->Subject  = 'AITE Notification';
+        $mail->Body     = 'This is an AITE notification, the report is attached as a GZipped JSON file.';
+
+        $mail->addStringAttachment(gzencode(json_encode($report)), 'report.json.gz');
+        if(!$mail->send()) {
+            $this->logError("Error while sending message to {$recipient}");
+            return false;
+        } 
+
+        $this->logInfo("Sent notification to{$recipient}");
 
         return true;
     }
@@ -295,8 +332,13 @@ class TiSaveReport extends Job
     private function enrichments($report) {
         $enrichments = [];
 
-        $value = $report['indicator']['indicator'];
-        $type = $report['indicator']['type'];
+//        if (!empty($report['indicator'])) {
+//            $value = $report['indicator']['indicator'];
+//            $type = $report['indicator']['type'];
+//        } else {
+            $value = $report['raw_indicator'];
+            $type = $report['type'];
+//        }
 
         switch ($type) {
 
@@ -403,7 +445,6 @@ class TiSaveReport extends Job
             if (count($response) == 4) {
                 $response = explode(" | ", $result[0]['txt'] . " ");
             }
-//$this->logInfo($response);
 
             if(empty($response[2])) { $response[2] = 'Unknown'; }
             if(empty($response[4])) { $response[4] = '1997-01-01'; }
@@ -429,15 +470,15 @@ class TiSaveReport extends Job
         // Not implement as there are no subnet entries yet
     }
 
-    function getDomainContact($object) {
+    private function getDomainContact($object) {
         // TODO
     }
 
-    function getRipeContact($object) {
+    private function getRipeContact($object) {
         // TODO
     }
 
-    function getAbuseContact($object) {
+    private function getAbuseContact($object) {
         // TODO
     }
 
