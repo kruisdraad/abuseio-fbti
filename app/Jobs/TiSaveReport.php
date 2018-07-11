@@ -286,15 +286,17 @@ class TiSaveReport extends Job
             (strcasecmp($report['enrichments']['ip_bgpcountry'], 'NL') == 0)
         ) {
             $this->notificationSend('cert@abuse.io', $report);
+            return true;
         }
 
         if ((!empty(($report['enrichments']['domain_cctld']))) AND
             (strcasecmp($report['enrichments']['domain_cctld'], 'NL') == 0)
         ) {
             $this->notificationSend('cert@abuse.io', $report);
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private function notificationSend($recipient, $report) {
