@@ -418,7 +418,8 @@ class TiSaveReport extends Job
     }
 
     private function enrichAddress($value) {
-        $zone4 = 'origin.asn.cymru.com';
+//        $zone4 = 'origin.asn.cymru.com';
+        $zone4 = 'origin.asn.shadowserver.org';
         $zone6 = 'origin6.asn.cymru.com';
 
         $enrichment = [];
@@ -440,21 +441,32 @@ class TiSaveReport extends Job
 
         $result = dns_get_record($dnslookup, DNS_TXT);
         if(!empty($result[0]['txt'])) {
-            // 14061 | 2604:a880:1::/48 | US | arin | 2013-04-11
+            // Cymru : 14061 | 2604:a880:1::/48 | US | arin | 2013-04-11
+            // Shadowserver : "204915 | 145.14.144.0/23 | AWEX, | US | US"
             $response = explode(" | ", $result[0]['txt']);
 
-            //16276 | 192.0.0.0/16 |  | other |
-            if (count($response) == 4) {
-                $response = explode(" | ", $result[0]['txt'] . " ");
+            if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                // Shadowserver:
+                $enrichment = array_combine(
+                    [ 'ip_asn', 'ip_prefix', 'ip_asnname', 'ip_bgpcountry', 'ip_ispname' ],
+                    $response
+                );
             }
 
-            if(empty($response[2])) { $response[2] = 'Unknown'; }
-            if(empty($response[4])) { $response[4] = '1997-01-01'; }
+            if(filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                //16276 | 192.0.0.0/16 |  | other |
+                if (count($response) == 4) {
+                    $response = explode(" | ", $result[0]['txt'] . " ");
+                }
 
-            $enrichment = array_combine(
-                [ 'ip_asn', 'ip_prefix', 'ip_bgpcountry', 'ip_region', 'ip_assignment' ],
-                $response
-            );
+                if(empty($response[2])) { $response[2] = 'Unknown'; }
+                if(empty($response[4])) { $response[4] = '1997-01-01'; }
+
+                $enrichment = array_combine(
+                    [ 'ip_asn', 'ip_prefix', 'ip_bgpcountry', 'ip_region', 'ip_assignment' ],
+                    $response
+                );
+            }
         }
 
         return $enrichment;
