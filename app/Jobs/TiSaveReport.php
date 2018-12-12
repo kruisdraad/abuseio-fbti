@@ -281,21 +281,21 @@ class TiSaveReport extends Job
         $this->logInfo(
             "Notifications method has been called"
         );
-
+/*
         if ((!empty(($report['enrichments']['ip_bgpcountry']))) AND
             (strcasecmp($report['enrichments']['ip_bgpcountry'], 'NL') == 0)
         ) {
-            $this->notificationSend('cert@abuse.io', $report);
+            $this->notificationSend('notifier@nbip.abuse.io', $report);
             return true;
         }
 
         if ((!empty(($report['enrichments']['domain_cctld']))) AND
             (strcasecmp($report['enrichments']['domain_cctld'], 'NL') == 0)
         ) {
-            $this->notificationSend('cert@abuse.io', $report);
+            $this->notificationSend('notifier@nbip.abuse.io', $report);
             return true;
         }
-
+*/
         return false;
     }
 
@@ -439,7 +439,16 @@ class TiSaveReport extends Job
             return $this->logError("EnrichmentIP failed for : {$value}");
         }
 
-        $result = dns_get_record($dnslookup, DNS_TXT);
+        try {
+            $result = dns_get_record($dnslookup, DNS_TXT);
+        }
+        catch (Exception $e) {
+            if ($e->getMessage() == 'dns_get_record(): A temporary server error occurred.') {
+                 $this->logError('DNS Query has failed for: ' . $dnslookup); 
+            }
+        }
+
+        ///$result = dns_get_record($dnslookup, DNS_TXT);
         if(!empty($result[0]['txt'])) {
             // Cymru : 14061 | 2604:a880:1::/48 | US | arin | 2013-04-11
             // Shadowserver : "204915 | 145.14.144.0/23 | AWEX, | US | US"
